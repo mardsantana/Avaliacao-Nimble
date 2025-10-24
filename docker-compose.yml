@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. Serviço de Banco de Dados PostgreSQL
   db:
     image: postgres:14
     container_name: nimble_db
@@ -17,15 +16,13 @@ services:
     networks:
       - nimble-network
 
-    # Adicionando HEALTHCHECK: ESSENCIAL para garantir que o banco de dados está pronto
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s # Tempo de espera para começar a checar
+      start_period: 10s
 
-  # 2. Serviço da Aplicação Spring Boot
   app:
     build:
       context: .
@@ -37,7 +34,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1998
       SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: public
 
-      # Outras variáveis de ambiente
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: sQf9n1R0v8k3tF2mY6WzXQ9uA4dJpOeR2bVhK3L1T0M=POWDPoONOIoijNKlknoi
       APP_AUTHORIZER_MOCK_MODE: "true"
@@ -48,17 +44,14 @@ services:
     networks:
       - nimble-network
 
-    # Usando depends_on + condition: service_healthy: A SOLUÇÃO para o seu erro
     depends_on:
       db:
         condition: service_healthy
 
-# Definição de Volumes
 volumes:
   db-data:
     driver: local
 
-# Definição de Redes (Melhor Prática)
 networks:
   nimble-network:
     driver: bridge
