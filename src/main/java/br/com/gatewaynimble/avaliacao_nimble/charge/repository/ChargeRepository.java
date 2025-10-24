@@ -13,5 +13,6 @@ import java.util.UUID;
 public interface ChargeRepository extends JpaRepository<Charge, UUID> {
 
     Collection<Charge> findByOriginatorOrRecipient(User user, User user1);
-    Optional<Charge> findFirstByOriginatorAndRecipientAndAmountAndStatus(User originator, User recipient, BigDecimal amount, ChargeStatus pending);
+    Optional<Charge> findFirstByOriginatorAndRecipientAndAmountAndStatus(
+            User originator, User recipient, BigDecimal amount, ChargeStatus pending);
 }

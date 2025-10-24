@@ -1,6 +1,5 @@
 package br.com.gatewaynimble.avaliacao_nimble.payment.impl;
 
-import br.com.gatewaynimble.avaliacao_nimble.charge.repository.ChargeRepository;
 import br.com.gatewaynimble.avaliacao_nimble.domain.TransactionEntity;
 import br.com.gatewaynimble.avaliacao_nimble.domain.User;
 import br.com.gatewaynimble.avaliacao_nimble.domain.enums.ChargeStatus;
@@ -25,7 +24,6 @@ public class RefundServiceImpl implements RefundService {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
-    private final ChargeRepository chargeRepository;
 
     @Override
     @Transactional
@@ -42,26 +40,21 @@ public class RefundServiceImpl implements RefundService {
         User originator = original.getOriginator();
         User recipient = original.getRecipient();
 
-        // Verifica saldo do destinatário
         if (recipient.getBalance().compareTo(original.getAmount()) < 0) {
             throw new BusinessException("O destinatário não possui saldo suficiente para reembolso.");
         }
 
-        // Realiza o reembolso
         recipient.setBalance(recipient.getBalance().subtract(original.getAmount()));
         originator.setBalance(originator.getBalance().add(original.getAmount()));
         userRepository.save(originator);
         userRepository.save(recipient);
 
-        // Atualiza o status da transação original para REFUNDED
         original.setStatus(ChargeStatus.REFUNDED);
         transactionRepository.save(original);
 
         log.info("Transação original marcada como REFUNDED: {}", original.getId());
 
-// Cria nova transação de reembolso
         TransactionEntity refund = TransactionEntity.builder()
-//                .id(UUID.randomUUID())
                 .originator(recipient)
                 .recipient(originator)
                 .amount(original.getAmount())
@@ -76,7 +69,6 @@ public class RefundServiceImpl implements RefundService {
 
         log.info("[finish] RefundServiceImpl - refund");
 
-// Retorna resposta do pagamento
         return new PaymentResponse(
                 refund.getId(),
                 refund.getOriginator().getCpf(),

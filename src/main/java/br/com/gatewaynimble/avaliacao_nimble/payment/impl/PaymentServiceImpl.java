@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -38,7 +37,6 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponse processPayment(PaymentRequest request) {
         log.info("[start] PaymentServiceImpl - processPayment");
 
-        // Buscar usuários
         User originator = userRepository.findByCpf(request.originatorCpf())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário originador não encontrado"));
 
@@ -49,30 +47,25 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BusinessException("Um dos usuários está inativo e não pode realizar transações.");
         }
 
-        // 🔐 Validação via autorizador externo (para cartão)
         if ("CARD".equalsIgnoreCase(request.paymentMethod().name())) {
             boolean approved = authorizerClient.isApproved();
             if (!approved) {
-                // Se houver cobrança, marcar como FAILED
                 markChargeFailedIfExists(originator, recipient, request.amount());
                 throw new BusinessException("Transação negada pelo autorizador externo.");
             }
         }
 
-        // 💰 Validação de saldo (para pagamentos via BALANCE)
         if ("BALANCE".equalsIgnoreCase(request.paymentMethod().name()) &&
                 originator.getBalance().compareTo(request.amount()) < 0) {
             markChargeFailedIfExists(originator, recipient, request.amount());
             throw new BusinessException("Saldo insuficiente para realizar o pagamento.");
         }
 
-        // Atualizar saldos
         originator.setBalance(originator.getBalance().subtract(request.amount()));
         recipient.setBalance(recipient.getBalance().add(request.amount()));
         userRepository.save(originator);
         userRepository.save(recipient);
 
-        // Buscar a cobrança PENDING correspondente (se existir)
         Charge charge = chargeRepository.findFirstByOriginatorAndRecipientAndAmountAndStatus(
                 originator, recipient, request.amount(), ChargeStatus.PENDING
         ).orElse(null);
@@ -83,9 +76,7 @@ public class PaymentServiceImpl implements PaymentService {
             log.info("Cobrança marcada como SUCCESS: {}", charge.getId());
         }
 
-        // Registrar transação
         TransactionEntity transaction = TransactionEntity.builder()
-//                .id(UUID.randomUUID())
                 .originator(originator)
                 .recipient(recipient)
                 .amount(request.amount())
@@ -105,7 +96,7 @@ public class PaymentServiceImpl implements PaymentService {
                 transaction.getPaymentMethod(),
                 transaction.getStatus(),
                 transaction.getCreatedAt(),
-                charge != null ? charge.getId() : null // vincula cobrança se existir
+                charge != null ? charge.getId() : null
         );
     }
 
@@ -121,19 +112,16 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BusinessException("Usuário inativo não pode receber depósitos.");
         }
 
-        // 🔐 Validação via autorizador externo
         log.info("Verificando autorização externa para depósito...");
         boolean approved = authorizerClient.isApproved();
         if (!approved) {
             throw new BusinessException("Depósito negado pelo autorizador externo.");
         }
 
-        // Atualiza saldo
         recipient.setBalance(recipient.getBalance().add(request.amount()));
         userRepository.save(recipient);
 
         TransactionEntity transaction = TransactionEntity.builder()
-//                .id(UUID.randomUUID())
                 .originator(null)
                 .recipient(recipient)
                 .amount(request.amount())

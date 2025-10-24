@@ -30,11 +30,11 @@ public class Charge {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "originator_id", nullable = false)
-    private User originator; // quem criou a cobrança
+    private User originator;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient; // quem deve pagar
+    private User recipient;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -55,14 +55,7 @@ public class Charge {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // ===============================
-    // Regras de negócio encapsuladas
-    // ===============================
 
-    /**
-     * Marca a cobrança como paga (SUCCESS).
-     * @param payer usuário que está pagando a cobrança (deve ser o destinatário)
-     */
     public void markAsPaid(User payer) {
         if (this.status != ChargeStatus.PENDING) {
             throw new BusinessException("Cobrança já foi processada ou inválida");
@@ -76,10 +69,6 @@ public class Charge {
         this.paidAt = LocalDateTime.now();
     }
 
-    /**
-     * Marca a cobrança como falhada (FAILED).
-     * Pode ser usado se a transação for negada ou estornar
-     */
     public void markAsFailed() {
         if (this.status != ChargeStatus.PENDING) {
             throw new BusinessException("Cobrança já foi processada");
@@ -87,10 +76,6 @@ public class Charge {
         this.status = ChargeStatus.FAILED;
     }
 
-    /**
-     * Marca a cobrança como reembolsada (REFUNDED).
-     * Deve ser usado junto com a transação de refund
-     */
     public void markAsRefunded() {
         if (this.status != ChargeStatus.SUCCESS) {
             throw new BusinessException("Somente cobranças pagas podem ser reembolsadas");

@@ -47,15 +47,10 @@ public class TransactionEntity {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * Campo opcional para vincular o reembolso à transação original.
-     * Exemplo: se o usuário fez um refund, este campo aponta para a transação original.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "original_transaction_id")
     private TransactionEntity originalTransaction;
 
-    // ==== Métodos de negócio (opcional, mas recomendável) ====
     public boolean isRefundable() {
         return this.status == ChargeStatus.SUCCESS;
     }

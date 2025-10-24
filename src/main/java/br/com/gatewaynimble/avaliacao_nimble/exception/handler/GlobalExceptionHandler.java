@@ -35,22 +35,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     protected ResponseEntity<Object> handleNotFound(ResourceNotFoundException ex, WebRequest request) {
-        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request.getDescription(false).replace("uri=", ""));
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<Object> handleBusiness(BusinessException ex, WebRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getDescription(false).replace("uri=", ""));
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     protected ResponseEntity<Object> handleInvalidCredentials(InvalidCredentialsException ex, WebRequest request) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request.getDescription(false).replace("uri=", ""));
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     protected ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getDescription(false).replace("uri=", ""));
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @Override
@@ -63,9 +67,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        // converte HttpStatusCode para HttpStatus quando possível para usar buildResponse
         HttpStatus httpStatus = (status instanceof HttpStatus) ? (HttpStatus) status : HttpStatus.BAD_REQUEST;
-        return buildResponse(httpStatus, messages, request.getDescription(false).replace("uri=", ""));
+        return buildResponse(httpStatus, messages,
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @Override
@@ -74,12 +78,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   HttpStatusCode status,
                                                                   WebRequest request) {
         HttpStatus httpStatus = (status instanceof HttpStatus) ? (HttpStatus) status : HttpStatus.BAD_REQUEST;
-        return buildResponse(httpStatus, "Malformed JSON request", request.getDescription(false).replace("uri=", ""));
+        return buildResponse(httpStatus, "Malformed JSON request",
+                request.getDescription(false).replace("uri=", ""));
     }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleAll(Exception ex, WebRequest request) {
-        // Evita vazar detalhes internos em produção
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", request.getDescription(false).replace("uri=", ""));
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",
+                request.getDescription(false).replace("uri=", ""));
     }
 }
